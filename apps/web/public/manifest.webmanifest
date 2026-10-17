@@ -1,0 +1,10 @@
+{
+  "name": "Novabe Garments TQM",
+  "short_name": "Novabe TQM",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0b1b3a",
+  "background_color": "#f5f7fb",
+  "icons": [{ "src": "/icons/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

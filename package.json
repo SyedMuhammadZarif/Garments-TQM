@@ -1,0 +1,35 @@
+{
+  "name": "novabe-garments-tqm",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.9 <23"
+  },
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm run dev -w @tqm/api\" \"npm run dev -w @tqm/web\"",
+    "db:migrate": "tsx --env-file-if-exists=.env --conditions=source scripts/migrate.ts",
+    "db:reset": "tsx --env-file-if-exists=.env --conditions=source scripts/reset.ts",
+    "seed:base": "tsx --env-file-if-exists=.env --conditions=source db/seed/base/index.ts",
+    "seed:demo": "tsx --env-file-if-exists=.env --conditions=source db/seed/demo/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "test": "tsx --env-file-if-exists=.env --conditions=source --test \"packages/*/src/**/*.test.ts\" \"apps/*/src/**/*.test.ts\" \"scripts/**/*.test.ts\"",
+    "build": "npm run build -w @tqm/shared && npm run build -w @tqm/api && npm run build -w @tqm/web"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "concurrently": "10.0.6",
+    "eslint": "9.39.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
+  }
+}

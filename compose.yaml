@@ -1,0 +1,4 @@
+# Lets `docker compose up -d` work from the repo root (CLAUDE.md); the stack lives in deploy/.
+include:
+  - path: deploy/docker-compose.yml
+    env_file: .env

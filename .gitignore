@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+data/
+*.log
+.DS_Store
+db/seed/photos/full/*
+db/seed/photos/thumbs/*
+!db/seed/photos/**/.gitkeep

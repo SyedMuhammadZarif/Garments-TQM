@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+
+/* Minimal tokens for M0; the full design system (SPEC §15.2) arrives in Milestone 1. */
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-navy-900: #0b1b3a;
+  --color-brand-500: #3b5bfd;
+  --color-brand-600: #2f49e0;
+  --color-ok-500: #16a34a;
+  --color-ok-50: #f0fdf4;
+  --color-bad-500: #dc2626;
+  --color-bad-50: #fef2f2;
+  --color-surface-muted: #f5f7fb;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-surface-muted);
+}

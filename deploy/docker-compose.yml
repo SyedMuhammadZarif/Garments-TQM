@@ -1,0 +1,78 @@
+# Production-like stack (SPEC §22.4). Run from the repo root: `docker compose up -d`
+# (the root compose.yaml includes this file). Settings come from the root .env file.
+name: novabe-tqm
+
+services:
+  db:
+    image: postgres:16.10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tqm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tqm}
+      POSTGRES_DB: ${POSTGRES_DB:-tqm}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    deploy:
+      resources:
+        limits: { cpus: '2', memory: 2g }
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      APP_NAME: ${APP_NAME:-Novabe Garments TQM}
+      PORT: 4000
+      DATABASE_URL: postgres://${POSTGRES_USER:-tqm}:${POSTGRES_PASSWORD:-tqm}@db:5432/${POSTGRES_DB:-tqm}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      ACCESS_TOKEN_TTL_SEC: ${ACCESS_TOKEN_TTL_SEC:-900}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
+      UPLOAD_DIR: /data/uploads
+      ARCHIVE_DIR: /data/archive
+      WORKER_ENABLED: 'true'
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+    volumes:
+      - uploads:/data/uploads
+      - ${ARCHIVE_HOST_DIR:-archive}:/data/archive
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:4000/api/v1/health >/dev/null || exit 1']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { cpus: '2', memory: 1g }
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api: { condition: service_healthy }
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    volumes:
+      - uploads:/data/uploads:ro
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: 256m }
+
+volumes:
+  db-data:
+  uploads:
+  archive:

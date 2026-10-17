@@ -1,0 +1,11 @@
+{
+  "app.name": "Novabe Garments TQM",
+  "hello.title": "Hello",
+  "hello.subtitle": "Foundation is running.",
+  "hello.api": "API",
+  "hello.database": "Database",
+  "hello.checking": "Checking…",
+  "hello.ok": "Connected",
+  "hello.down": "Unavailable",
+  "hello.unreachable": "API unreachable"
+}
