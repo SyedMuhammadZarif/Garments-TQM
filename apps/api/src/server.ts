@@ -1,10 +1,10 @@
 import { ConfigError, loadConfig } from './config.js';
 import { createPool } from './db/pool.js';
 import { createApp } from './app.js';
-
-function log(level: string, msg: string, extra: Record<string, unknown> = {}): void {
-  console.log(JSON.stringify({ time: new Date().toISOString(), level, msg, ...extra }));
-}
+import { setLogLevel, logger } from './lib/logger.js';
+import { Worker } from './jobs/worker.js';
+import { handlers } from './jobs/handlers/index.js';
+import { startScheduler } from './jobs/scheduler.js';
 
 function main(): void {
   let config;
@@ -18,23 +18,29 @@ function main(): void {
     throw err;
   }
 
+  setLogLevel(config.logLevel);
   const pool = createPool(config.databaseUrl);
-  const app = createApp({ pool });
+  const app = createApp({ pool, config });
   const server = app.listen(config.port, () => {
-    log('info', 'api listening', { port: config.port, env: config.nodeEnv });
+    logger.info('api listening', { port: config.port, env: config.nodeEnv });
   });
+
+  const worker = config.workerEnabled ? new Worker(pool, handlers) : null;
+  const stopScheduler = config.workerEnabled ? startScheduler(pool) : () => undefined;
+  worker?.start();
 
   let shuttingDown = false;
   const shutdown = (signal: string): void => {
     if (shuttingDown) return;
     shuttingDown = true;
-    log('info', 'shutting down', { signal });
+    logger.info('shutting down', { signal });
+    stopScheduler();
     // Give in-flight requests up to 30 s (SPEC §12.1), then force exit.
     const force = setTimeout(() => process.exit(1), 30_000);
     force.unref();
     server.close(() => {
-      pool
-        .end()
+      Promise.resolve(worker?.stop())
+        .then(() => pool.end())
         .catch(() => undefined)
         .finally(() => process.exit(0));
     });

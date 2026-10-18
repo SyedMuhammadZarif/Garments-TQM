@@ -11,6 +11,8 @@ export type Config = {
   jwtSecret: string;
   accessTokenTtlSec: number;
   refreshTokenTtlDays: number;
+  /** bcrypt cost (SPEC §11: 12). Tests lower it for speed; production refuses less than 12. */
+  bcryptRounds: number;
   uploadDir: string;
   archiveDir: string;
   workerEnabled: boolean;
@@ -87,6 +89,10 @@ export function loadConfig(env: Env = process.env): Config {
     problems.push('JWT_SECRET still has the example value; generate a random secret for production');
   }
 
+  if (nodeEnv === 'production' && Number(env.BCRYPT_ROUNDS ?? 12) < 12) {
+    problems.push('BCRYPT_ROUNDS must be at least 12 in production');
+  }
+
   const deepseekKey = env.DEEPSEEK_API_KEY?.trim() ?? '';
 
   const config: Config = {
@@ -97,6 +103,7 @@ export function loadConfig(env: Env = process.env): Config {
     jwtSecret,
     accessTokenTtlSec: int('ACCESS_TOKEN_TTL_SEC', 900, 60, 86400),
     refreshTokenTtlDays: int('REFRESH_TOKEN_TTL_DAYS', 30, 1, 365),
+    bcryptRounds: int('BCRYPT_ROUNDS', 12, 4, 15),
     uploadDir: read('UPLOAD_DIR', './data/uploads'),
     archiveDir: read('ARCHIVE_DIR', './data/archive'),
     workerEnabled: bool('WORKER_ENABLED', true),
